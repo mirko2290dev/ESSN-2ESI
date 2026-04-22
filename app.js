@@ -9,13 +9,14 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyC8bdoLzeui9kNGmzwbzGhNQZN2kt272xQ",
-  authDomain: "encueesta.firebaseapp.com",
-  projectId: "encueesta",
-  storageBucket: "encueesta.firebasestorage.app",
-  messagingSenderId: "827961203905",
-  appId: "1:827961203905:web:dfae9932c131390e820840"
+  apiKey: "AIzaSyB9V6o6_j2Fr28Km0ejK46fDg7EMS8B8JA",
+  authDomain: "essn-61020.firebaseapp.com",
+  projectId: "essn-61020",
+  storageBucket: "essn-61020.firebasestorage.app",
+  messagingSenderId: "309432873519",
+  appId: "1:309432873519:web:f9d7b0e8360c24b6338cda"
 };
+
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
