@@ -104,16 +104,6 @@ const FIELD_ORDER = [
   "esi_suficiente", "temas_esi"
 ];
 
-function csvEscape(value) {
-  const s = String(value ?? "");
-  return `"${s.replace(/"/g, '""')}"`;
-}
-
-function asText(value) {
-  if (Array.isArray(value)) return value.filter(Boolean).join(" | ");
-  return value ?? "";
-}
-
 function buildQuestion(sectionIndex, questionIndex, question) {
   const block = document.createElement("div");
   block.className = "question";
@@ -191,6 +181,7 @@ function buildQuestion(sectionIndex, questionIndex, question) {
       const input = document.createElement("input");
       input.type = "checkbox";
       input.name = question.key;
+      id;
       input.id = id;
       input.value = option;
 
@@ -371,7 +362,7 @@ async function initSurvey() {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
       console.error("Error al guardar:", error);
-      alert("No se pudo guardar la respuesta. Revisá las reglas de Firestore y la consola.");
+      alert("No se pudo guardar la respuesta.");
     } finally {
       if (submitBtn) {
         submitBtn.disabled = false;
@@ -381,164 +372,4 @@ async function initSurvey() {
   });
 }
 
-function buildCharts(rows) {
-  const questions = {
-    esi_suficiente: "¿Sentís que las jornadas de ESI son suficientes?",
-    alcohol_vez: "¿Consumiste alguna vez una bebida alcohólica?",
-    sustancias_vez: "¿Consumiste alguna vez sustancias ilícitas?",
-    imagen_corporal: "¿Cómo te sentís con tu imagen corporal?",
-    redes_influyen: "¿Las redes sociales influyen en cómo te ves?",
-    comparacion: "¿Te comparás seguido con otras personas?"
-  };
-
-  const container = document.getElementById("charts");
-  if (!container) return;
-
-  container.innerHTML = "";
-
-  Object.entries(questions).forEach(([key, label]) => {
-    const counts = new Map();
-
-    rows.forEach(row => {
-      const value = row[key];
-      if (!value) return;
-      counts.set(value, (counts.get(value) || 0) + 1);
-    });
-
-    const ordered = [...counts.entries()].sort((a, b) => b[1] - a[1]);
-
-    const card = document.createElement("div");
-    card.className = "chart";
-
-    const h3 = document.createElement("h3");
-    h3.textContent = label;
-    card.appendChild(h3);
-
-    if (!ordered.length) {
-      const note = document.createElement("div");
-      note.className = "notice";
-      note.textContent = "Aún no hay datos para mostrar.";
-      card.appendChild(note);
-    } else {
-      const max = Math.max(...ordered.map(([, c]) => c));
-      ordered.forEach(([opt, count]) => {
-        const row = document.createElement("div");
-        row.className = "bar-row";
-
-        const labelBox = document.createElement("div");
-        labelBox.className = "bar-label";
-        labelBox.textContent = opt;
-
-        const track = document.createElement("div");
-        track.className = "bar-track";
-
-        const fill = document.createElement("div");
-        fill.className = "bar-fill";
-        fill.style.width = `${Math.max(4, Math.round((count / max) * 100))}%`;
-
-        track.appendChild(fill);
-
-        const num = document.createElement("div");
-        num.className = "bar-num";
-        num.textContent = count;
-
-        row.append(labelBox, track, num);
-        card.appendChild(row);
-      });
-    }
-
-    container.appendChild(card);
-  });
-}
-
-function buildTable(rows) {
-  const wrap = document.getElementById("table-wrap");
-  const table = document.getElementById("responses-table");
-  if (!wrap || !table) return;
-
-  table.innerHTML = "";
-
-  const head = document.createElement("thead");
-  const tr = document.createElement("tr");
-  FIELD_ORDER.forEach(key => {
-    const th = document.createElement("th");
-    th.textContent = key;
-    tr.appendChild(th);
-  });
-  head.appendChild(tr);
-  table.appendChild(head);
-
-  const body = document.createElement("tbody");
-  [...rows].slice().reverse().forEach(row => {
-    const trb = document.createElement("tr");
-    FIELD_ORDER.forEach(key => {
-      const td = document.createElement("td");
-      const val = row[key];
-      if (key === "submitted_at" && val) {
-        td.textContent = new Date(val).toLocaleString("es-AR");
-      } else {
-        td.textContent = asText(val);
-      }
-      trb.appendChild(td);
-    });
-    body.appendChild(trb);
-  });
-  table.appendChild(body);
-  wrap.classList.toggle("hidden", rows.length === 0);
-}
-
-async function loadResponses() {
-  const q = query(collection(db, COLLECTION_NAME), orderBy("submitted_at", "asc"));
-  const snap = await getDocs(q);
-  return snap.docs.map(doc => doc.data());
-}
-
-async function initAdmin() {
-  const root = document.getElementById("admin-root");
-  if (!root) return;
-
-  let rows = [];
-  try {
-    rows = await loadResponses();
-  } catch (error) {
-    console.error("Error cargando respuestas:", error);
-    alert("No se pudieron cargar las respuestas. Revisá las reglas de Firestore.");
-    return;
-  }
-
-  const total = document.getElementById("total-count");
-  const lastDate = document.getElementById("last-date");
-
-  if (total) total.textContent = rows.length;
-  if (lastDate) {
-    lastDate.textContent = rows.length
-      ? new Date(rows[rows.length - 1].submitted_at).toLocaleString("es-AR")
-      : "—";
-  }
-
-  buildCharts(rows);
-  buildTable(rows);
-
-  const exportBtn = document.getElementById("export-csv");
-  if (exportBtn) {
-    exportBtn.addEventListener("click", () => {
-      const csvRows = [FIELD_ORDER.map(csvEscape).join(",")];
-      rows.forEach(row => {
-        csvRows.push(FIELD_ORDER.map(key => csvEscape(asText(row[key]))).join(","));
-      });
-
-      const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "respuestas_esi.csv";
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-  }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  initSurvey();
-  initAdmin();
-});
+document.addEventListener("DOMContentLoaded", initSurvey);
