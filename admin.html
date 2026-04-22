@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de resultados</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="wrap" id="admin-root">
+    <div class="card">
+      <div class="topbar">
+        <div class="brand">
+          <h1>Panel de resultados</h1>
+          <p>Lee las respuestas guardadas en este navegador y permite exportarlas a CSV.</p>
+        </div>
+        <div class="nav">
+          <a class="btn secondary" href="index.html">Volver a la encuesta</a>
+          <button class="btn" id="export-csv" type="button">Descargar CSV</button>
+          <button class="btn secondary" id="clear-data" type="button">Borrar datos</button>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="stat"><span>Respuestas guardadas</span><strong id="total-count">0</strong></div>
+        <div class="stat"><span>Último envío</span><strong id="last-date">—</strong></div>
+        <div class="stat"><span>Almacenamiento</span><strong>localStorage</strong></div>
+      </div>
+
+      <div id="charts" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;margin-top:18px"></div>
+
+      <div id="table-wrap" class="table-wrap hidden">
+        <table id="responses-table"></table>
+      </div>
+
+      <div class="footer-note">Si querés guardar respuestas de varias personas en un sitio público, después de GitHub Pages conviene conectar un backend o un formulario externo.</div>
+    </div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

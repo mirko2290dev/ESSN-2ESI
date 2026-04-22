@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Encuesta ESI</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="topbar">
+        <div class="brand">
+          <h1>Encuesta ESI</h1>
+          <p>Versión lista para GitHub Pages, sin PHP y con guardado local en el navegador.</p>
+        </div>
+      </div>
+
+      <div id="saved-message" class="notice success hidden">
+        La respuesta se guardó en este navegador.
+      </div>
+
+      <form id="survey-form">
+        <input type="hidden" id="started_at" name="started_at" value="">
+
+        <div class="section-card">
+          <h2 class="section-title">Inicio</h2>
+          <div class="question">
+            <span class="qtitle">Curso</span>
+            <select id="curso" name="curso" required>
+              <option value="">Elegí una opción</option>
+              <option value="1°">1°</option>
+              <option value="2°">2°</option>
+              <option value="3°">3°</option>
+              <option value="4°">4°</option>
+              <option value="5°">5°</option>
+              <option value="6°">6°</option>
+            </select>
+          </div>
+          <div class="hint">Todas las preguntas están en una sola página para que funcione en GitHub Pages.</div>
+        </div>
+
+        <div id="survey-sections"></div>
+
+        <div class="row">
+          <button class="btn secondary" type="reset">Limpiar</button>
+          <button class="btn" type="submit">Guardar respuestas</button>
+        </div>
+      </form>
+    </div>
+    <div class="footer-note">El guardado queda en este navegador. Para guardar de forma centralizada en GitHub Pages hace falta un servicio externo, porque GitHub no ejecuta PHP ni escribe archivos desde el navegador.</div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
