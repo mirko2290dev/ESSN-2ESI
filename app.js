@@ -17,7 +17,6 @@ const firebaseConfig = {
   appId: "1:309432873519:web:f9d7b0e8360c24b6338cda"
 };
 
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const COLLECTION_NAME = "respuestas";
