@@ -1,107 +1,230 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Encuesta</title>
-
-<style>
-body{
-  font-family: Arial;
-  background:#ffe4ec;
-  padding:20px;
-}
-.container{
-  background:white;
-  padding:20px;
-  border-radius:10px;
-  max-width:600px;
-  margin:auto;
-}
-button{
-  background:#ff7aa2;
-  border:none;
-  padding:10px;
-  color:white;
-  border-radius:5px;
-  cursor:pointer;
-}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Encuesta ESI</title>
+  <style>
+    :root{
+      --bg:#ffe4ec;
+      --card:#ffffff;
+      --accent:#ff85a2;
+      --accent2:#d63384;
+      --soft:#fff0f5;
+      --border:#f3c7d4;
+      --text:#2f2f2f;
+      --muted:#6b7280;
+      --success:#1f9d55;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:Arial, Helvetica, sans-serif;
+      background:linear-gradient(180deg,#ffe4ec 0%, #fff7fa 100%);
+      color:var(--text);
+      padding:24px;
+    }
+    .wrap{max-width:980px;margin:0 auto}
+    .card{
+      background:var(--card);
+      border:1px solid rgba(255,133,162,.2);
+      border-radius:22px;
+      box-shadow:0 12px 30px rgba(214,51,132,.08);
+      padding:22px;
+    }
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:16px;
+      flex-wrap:wrap;
+      margin-bottom:18px;
+    }
+    .brand h1{
+      margin:0 0 6px 0;
+      color:var(--accent2);
+      font-size:32px;
+    }
+    .brand p{
+      margin:0;
+      color:var(--muted);
+    }
+    .section-card{
+      margin:18px 0;
+      padding:16px;
+      border-radius:18px;
+      background:#fffafc;
+      border:1px solid #f8dbe4;
+    }
+    .section-title{
+      margin:0 0 12px 0;
+      color:var(--accent2);
+      font-size:22px;
+    }
+    .question{margin:14px 0}
+    .qtitle{
+      display:block;
+      font-weight:700;
+      margin-bottom:8px;
+    }
+    .options{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+      gap:10px;
+    }
+    .opt{position:relative}
+    .opt input{
+      position:absolute;
+      opacity:0;
+      pointer-events:none;
+    }
+    .opt label{
+      display:block;
+      padding:12px 14px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:var(--soft);
+      cursor:pointer;
+      transition:.15s ease;
+      text-align:center;
+      user-select:none;
+    }
+    .opt label:hover{transform:translateY(-1px);background:#ffdbe6}
+    .opt input:checked + label{
+      background:var(--accent);
+      color:white;
+      border-color:var(--accent);
+    }
+    select, input[type="text"], input[type="number"], textarea{
+      width:100%;
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:12px 14px;
+      background:#fff;
+      font-size:15px;
+      font-family:inherit;
+    }
+    .checkbox-list{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+      gap:10px;
+    }
+    .check{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      padding:12px 14px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      cursor:pointer;
+    }
+    .check input{margin-top:3px; accent-color:var(--accent)}
+    .hint{
+      margin-top:8px;
+      font-size:13px;
+      color:var(--muted);
+    }
+    .notice{
+      padding:12px 14px;
+      border-radius:14px;
+      margin-bottom:16px;
+      border:1px solid var(--border);
+      background:#fff;
+    }
+    .notice.success{
+      background:#ecfdf3;
+      border-color:#b9ebcb;
+      color:var(--success);
+    }
+    .hidden{display:none !important}
+    .row{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      justify-content:center;
+      margin-top:18px;
+    }
+    .btn, button{
+      border:none;
+      background:var(--accent);
+      color:white;
+      padding:14px 18px;
+      border-radius:14px;
+      font-size:16px;
+      cursor:pointer;
+      text-decoration:none;
+      display:inline-block;
+      box-shadow:0 10px 22px rgba(255,133,162,.25);
+    }
+    .btn.secondary, button.secondary{
+      background:#fff;
+      color:var(--accent2);
+      border:1px solid var(--border);
+      box-shadow:none;
+    }
+    .btn:hover, button:hover{filter:brightness(.98)}
+    .footer-note{
+      margin-top:16px;
+      color:var(--muted);
+      font-size:13px;
+      text-align:center;
+    }
+    @media (max-width: 640px){
+      body{padding:14px}
+      .card{padding:16px;border-radius:18px}
+      .brand h1{font-size:26px}
+    }
+  </style>
 </head>
 <body>
+  <div class="wrap">
+    <div class="card">
+      <div class="topbar">
+        <div class="brand">
+          <h1>Encuesta ESI</h1>
+          <p>Formulario completo en una sola página.</p>
+        </div>
+      </div>
 
-<div class="container">
-<h2>Encuesta</h2>
+      <div id="saved-message" class="notice success hidden">
+        La respuesta se guardó correctamente.
+      </div>
 
-<form id="form">
+      <form id="survey-form">
+        <input type="hidden" id="started_at" name="started_at" value="">
 
-<label>Edad:</label><br>
-<input type="number" name="edad" required><br><br>
+        <div class="section-card">
+          <h2 class="section-title">Inicio</h2>
+          <div class="question">
+            <span class="qtitle">Curso</span>
+            <select id="curso" name="curso" required>
+              <option value="">Elegí una opción</option>
+              <option value="1°">1°</option>
+              <option value="2°">2°</option>
+              <option value="3°">3°</option>
+              <option value="4°">4°</option>
+              <option value="5°">5°</option>
+              <option value="6°">6°</option>
+            </select>
+          </div>
+          <div class="hint">Todas las preguntas están en una sola página.</div>
+        </div>
 
-<label>Curso:</label><br>
-<input type="text" name="curso" required><br><br>
+        <div id="survey-sections"></div>
 
-<label>¿Te gusta el anime?</label><br>
-<select name="anime">
-<option>Si</option>
-<option>No</option>
-</select><br><br>
+        <div class="row">
+          <button class="btn secondary" type="reset">Limpiar</button>
+          <button class="btn" type="submit">Guardar respuestas</button>
+        </div>
+      </form>
+    </div>
 
-<button type="submit">Enviar</button>
-</form>
+    <div class="footer-note">
+      Al guardar, las respuestas quedan registradas para poder revisarlas después.
+    </div>
+  </div>
 
-
-<!-- Firebase SDK -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-// 🔴 PEGÁ TU CONFIG ACÁ
-const firebaseConfig = {
-  apiKey: "AIzaSyC8bdoLzeui9kNGmzwbzGhNQZN2kt272xQ",
-  authDomain: "encueesta.firebaseapp.com",
-  projectId: "encueesta",
-};
-
-// Inicializar
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// Guardar datos
-document.getElementById("form").addEventListener("submit", async (e)=>{
-  e.preventDefault();
-
-  const formData = new FormData(e.target);
-
-  const data = {
-    edad: formData.get("edad"),
-    curso: formData.get("curso"),
-    anime: formData.get("anime"),
-    fecha: new Date().toISOString()
-  };
-
-  try{
-    await addDoc(collection(db, "respuestas"), data);
-    alert("Guardado correctamente");
-    e.target.reset();
-  }catch(err){
-    console.error(err);
-    alert("Error al guardar");
-  }
-});
-
-// Ver datos
-window.verDatos = async ()=>{
-  const querySnapshot = await getDocs(collection(db, "respuestas"));
-  let texto = "";
-
-  querySnapshot.forEach(doc=>{
-    texto += JSON.stringify(doc.data(), null, 2) + "\n\n";
-  });
-
-  document.getElementById("output").textContent = texto;
-};
-</script>
-
+  <script type="module" src="app.js"></script>
 </body>
 </html>
