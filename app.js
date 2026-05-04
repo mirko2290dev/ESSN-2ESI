@@ -2,7 +2,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import {
   getFirestore,
   collection,
-  addDoc,
   getDocs,
   query,
   orderBy
@@ -21,74 +20,21 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const COLLECTION_NAME = "respuestas";
 
-const SURVEY = [
-  {
-    title: "Sexualidad",
-    questions: [
-      { key: "novi", label: "¿Tenés o tuviste novi@?", type: "radio", required: true, options: ["Sí, tengo", "Sí, tuve", "No"] },
-      { key: "vida_sexual", label: "¿Ya comenzaste tu vida sexual?", type: "radio", required: true, options: ["Sí", "No"] },
-      { key: "preservativo", label: "Si respondiste “Sí”, ¿usás preservativo?", type: "radio", requiredWhenVisible: true, visibleIf: { field: "vida_sexual", value: "Sí" }, options: ["Siempre", "A veces", "No"] },
-      { key: "otros_anticonceptivos", label: "¿Usás otros métodos anticonceptivos?", type: "radio", requiredWhenVisible: true, visibleIf: { field: "vida_sexual", value: "Sí" }, options: ["Sí", "No"] },
-      { key: "info_futuro", label: "Si respondiste “No”, ¿te gustaría aprender más sobre cómo cuidarte en el futuro?", type: "radio", requiredWhenVisible: true, visibleIf: { field: "vida_sexual", value: "No" }, options: ["Sí", "No"] }
-    ]
-  },
-  {
-    title: "Uso correcto de anticonceptivos",
-    questions: [
-      { key: "preservativo_conoce", label: "¿Sabés usar correctamente el preservativo?", type: "radio", required: true, options: ["Sí", "Más o menos", "No"] },
-      { key: "otros_metodos", label: "¿Conocés otros métodos anticonceptivos?", type: "radio", required: true, options: ["Sí", "No"] },
-      { key: "escuela_anti", label: "¿La escuela enseña suficiente sobre anticonceptivos?", type: "radio", required: true, options: ["Sí", "No", "Más o menos"] }
-    ]
-  },
-  {
-    title: "Bullying",
-    questions: [
-      { key: "bullying", label: "¿Sentís que en tu curso hay discriminación o bullying?", type: "radio", required: true, options: ["Sí", "A veces", "No"] },
-      { key: "motivo_bullying", label: "¿Por cuál motivo suele pasar más?", type: "radio", required: true, options: ["Apariencia", "Opiniones", "Orientación sexual", "Identidad de género", "Otro"] }
-    ]
-  },
-  {
-    title: "Diversidad y discriminación",
-    questions: [
-      { key: "orientacion", label: "¿Cómo te identificás en tu orientación sexual?", type: "radio", required: true, options: ["Heterosexual", "Homosexual", "Bisexual", "Pansexual", "Asexual", "Otra"] },
-      { key: "abierto_sexualidad", label: "¿Te sentís abierto/a con tu sexualidad?", type: "radio", requiredWhenVisible: true, visibleIf: { field: "orientacion", valueNot: "Heterosexual" }, options: ["Sí", "No", "Depende"] },
-      { key: "discriminado_sexualidad", label: "¿Te sentís discriminado/a por tu sexualidad?", type: "radio", requiredWhenVisible: true, visibleIf: { field: "orientacion", valueNot: "Heterosexual" }, options: ["Sí", "A veces", "No"] },
-      { key: "identidad_genero", label: "¿Cómo te identificás en tu identidad de género?", type: "radio", required: true, options: ["Cisgénero", "Trans", "No binario", "Otro"] },
-      { key: "abierto_identidad", label: "¿Te sentís abierto/a con tu identidad de género?", type: "radio", requiredWhenVisible: true, visibleIf: { field: "identidad_genero", valueNot: "Cisgénero" }, options: ["Sí", "No", "Depende"] },
-      { key: "discriminado_identidad", label: "¿Te sentís discriminado/a por tu identidad de género?", type: "radio", requiredWhenVisible: true, visibleIf: { field: "identidad_genero", valueNot: "Cisgénero" }, options: ["Sí", "A veces", "No"] }
-    ]
-  },
-  {
-    title: "Abuso de alcohol",
-    questions: [
-      { key: "alcohol_vez", label: "¿Consumiste alguna vez una bebida alcohólica?", type: "radio", required: true, options: ["Sí", "No"] },
-      { key: "alcohol_frecuencia", label: "¿Con qué frecuencia consumís bebidas alcohólicas?", type: "radio", required: true, options: ["Nunca", "Rara vez", "A veces", "Frecuentemente"] }
-    ]
-  },
-  {
-    title: "Abuso de sustancias ilícitas",
-    questions: [
-      { key: "sustancias_vez", label: "¿Consumiste alguna vez sustancias ilícitas?", type: "radio", required: true, options: ["Sí", "No"] },
-      { key: "sustancias_frecuencia", label: "¿Con qué frecuencia consumís sustancias ilícitas?", type: "radio", required: true, options: ["Nunca", "Rara vez", "A veces", "Frecuentemente"] }
-    ]
-  },
-  {
-    title: "Autopercepción corporal",
-    questions: [
-      { key: "imagen_corporal", label: "¿Cómo te sentís con tu imagen corporal?", type: "radio", required: true, options: ["Muy conforme", "Conforme", "Poco conforme"] },
-      { key: "redes_influyen", label: "¿Las redes sociales influyen en cómo te ves?", type: "radio", required: true, options: ["Sí", "A veces", "No"] },
-      { key: "comparacion", label: "¿Te comparás seguido con otras personas?", type: "radio", required: true, options: ["Sí", "A veces", "No"] },
-      { key: "hablo_mal", label: "¿Has hablado mal de alguien a sus espaldas?", type: "select", required: true, options: ["Sí", "No"] },
-      { key: "escucho_mal", label: "¿Has escuchado gente hablar mal de vos a tus espaldas?", type: "select", required: true, options: ["Sí", "No"] }
-    ]
-  },
-  {
-    title: "Autoestima",
-    questions: [
-      { key: "esi_suficiente", label: "¿Sentís que las jornadas de ESI son suficientes?", type: "radio", required: true, options: ["Sí", "No", "Más o menos"] },
-      { key: "temas_esi", label: "¿Qué temas te gustaría ver en próximas jornadas de ESI?", type: "checkbox", required: false, options: ["Sexualidad", "Uso correcto de anticonceptivos", "Bullying", "Diversidad y discriminación", "Abuso de alcohol", "Abuso de sustancias ilícitas", "Autopercepción corporal", "Autoestima"] }
-    ]
-  }
+const REPORT_FIELDS = [
+  { key: "novi", label: "¿Tenés o tuviste novi@?" },
+  { key: "vida_sexual", label: "¿Ya comenzaste tu vida sexual?" },
+  { key: "preservativo_conoce", label: "¿Sabés usar correctamente el preservativo?" },
+  { key: "otros_metodos", label: "¿Conocés otros métodos anticonceptivos?" },
+  { key: "escuela_anti", label: "¿La escuela enseña suficiente sobre anticonceptivos?" },
+  { key: "bullying", label: "¿Sentís que en tu curso hay discriminación o bullying?" },
+  { key: "orientacion", label: "¿Cómo te identificás en tu orientación sexual?" },
+  { key: "identidad_genero", label: "¿Cómo te identificás en tu identidad de género?" },
+  { key: "alcohol_vez", label: "¿Consumiste alguna vez una bebida alcohólica?" },
+  { key: "sustancias_vez", label: "¿Consumiste alguna vez sustancias ilícitas?" },
+  { key: "imagen_corporal", label: "¿Cómo te sentís con tu imagen corporal?" },
+  { key: "redes_influyen", label: "¿Las redes sociales influyen en cómo te ves?" },
+  { key: "comparacion", label: "¿Te comparás seguido con otras personas?" },
+  { key: "esi_suficiente", label: "¿Sentís que las jornadas de ESI son suficientes?" }
 ];
 
 const FIELD_ORDER = [
@@ -104,272 +50,213 @@ const FIELD_ORDER = [
   "esi_suficiente", "temas_esi"
 ];
 
-function buildQuestion(sectionIndex, questionIndex, question) {
-  const block = document.createElement("div");
-  block.className = "question";
-  block.dataset.key = question.key;
+let chartInstances = [];
 
-  if (question.visibleIf) {
-    block.dataset.visibleField = question.visibleIf.field;
-    if (Object.prototype.hasOwnProperty.call(question.visibleIf, "value")) {
-      block.dataset.visibleValue = question.visibleIf.value;
-    }
-    if (Object.prototype.hasOwnProperty.call(question.visibleIf, "valueNot")) {
-      block.dataset.visibleNot = question.visibleIf.valueNot;
-    }
-    if (question.requiredWhenVisible) {
-      block.dataset.requiredWhenVisible = "true";
-    }
-  }
-
-  const title = document.createElement("span");
-  title.className = "qtitle";
-  title.textContent = question.label;
-  block.appendChild(title);
-
-  if (question.type === "radio") {
-    const options = document.createElement("div");
-    options.className = "options";
-    question.options.forEach((option, idx) => {
-      const id = `q_${sectionIndex}_${questionIndex}_${idx}`;
-      const opt = document.createElement("div");
-      opt.className = "opt";
-
-      const input = document.createElement("input");
-      input.type = "radio";
-      input.name = question.key;
-      input.id = id;
-      input.value = option;
-      input.required = !!question.required && !question.visibleIf;
-
-      const label = document.createElement("label");
-      label.setAttribute("for", id);
-      label.textContent = option;
-
-      opt.append(input, label);
-      options.appendChild(opt);
-    });
-    block.appendChild(options);
-  } else if (question.type === "select") {
-    const select = document.createElement("select");
-    select.name = question.key;
-    select.required = !!question.required;
-
-    const empty = document.createElement("option");
-    empty.value = "";
-    empty.textContent = "Elegí una opción";
-    select.appendChild(empty);
-
-    question.options.forEach(option => {
-      const o = document.createElement("option");
-      o.value = option;
-      o.textContent = option;
-      select.appendChild(o);
-    });
-
-    block.appendChild(select);
-  } else if (question.type === "checkbox") {
-    const list = document.createElement("div");
-    list.className = "checkbox-list";
-
-    question.options.forEach((option, idx) => {
-      const id = `q_${sectionIndex}_${questionIndex}_${idx}`;
-      const label = document.createElement("label");
-      label.className = "check";
-      label.setAttribute("for", id);
-
-      const input = document.createElement("input");
-      input.type = "checkbox";
-      input.name = question.key;
-      id;
-      input.id = id;
-      input.value = option;
-
-      label.append(input, document.createTextNode(" " + option));
-      list.appendChild(label);
-    });
-
-    block.appendChild(list);
-
-    const hint = document.createElement("div");
-    hint.className = "hint";
-    hint.textContent = "Podés marcar más de una opción.";
-    block.appendChild(hint);
-  }
-
-  return block;
+function asText(value) {
+  if (Array.isArray(value)) return value.filter(Boolean).join(" | ");
+  return value ?? "";
 }
 
-function buildSurveyMarkup() {
-  const container = document.getElementById("survey-sections");
+function csvEscape(value) {
+  return `"${String(value ?? "").replace(/"/g, '""')}"`;
+}
+
+function countField(rows, key) {
+  const counts = {};
+  rows.forEach(row => {
+    const value = row[key];
+    if (!value) return;
+    counts[value] = (counts[value] || 0) + 1;
+  });
+  return counts;
+}
+
+function getRowsByCourse(rows) {
+  const map = new Map();
+  rows.forEach(row => {
+    const course = row.curso || "Sin curso";
+    if (!map.has(course)) map.set(course, []);
+    map.get(course).push(row);
+  });
+  return map;
+}
+
+function destroyCharts() {
+  chartInstances.forEach(chart => chart.destroy());
+  chartInstances = [];
+}
+
+function createChartCard(titleText, counts, parent) {
+  const card = document.createElement("div");
+  card.className = "chart-box";
+
+  const h4 = document.createElement("h4");
+  h4.textContent = titleText;
+  card.appendChild(h4);
+
+  const text = document.createElement("div");
+  text.className = "report-text";
+
+  const lines = Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .map(([opt, n]) => `${opt}: ${n}`);
+
+  text.textContent = lines.length ? lines.join("\n") : "Sin datos todavía.";
+  card.appendChild(text);
+
+  const canvas = document.createElement("canvas");
+  card.appendChild(canvas);
+
+  parent.appendChild(card);
+
+  const labels = Object.keys(counts);
+  const data = Object.values(counts);
+
+  if (labels.length) {
+    const chart = new Chart(canvas, {
+      type: "bar",
+      data: {
+        labels,
+        datasets: [{
+          label: "Votos",
+          data
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+    chartInstances.push(chart);
+  }
+}
+
+function renderSummaryText(rows, target) {
+  const parts = REPORT_FIELDS.map(field => {
+    const counts = countField(rows, field.key);
+    const text = Object.entries(counts)
+      .map(([opt, n]) => `${opt} = ${n}`)
+      .join(", ");
+    return `${field.label}: ${text || "sin respuestas"}`;
+  });
+
+  target.innerHTML = `
+    <h3>Resumen global</h3>
+    <div class="report-text">${parts.join("\n\n")}</div>
+  `;
+}
+
+function renderGlobalResults(rows) {
+  const total = document.getElementById("total-count");
+  const lastDate = document.getElementById("last-date");
+  const courseCount = document.getElementById("course-count");
+  const summary = document.getElementById("summary-global");
+  const charts = document.getElementById("charts-global");
+
+  if (total) total.textContent = rows.length;
+  if (lastDate) {
+    lastDate.textContent = rows.length
+      ? new Date(rows[rows.length - 1].submitted_at).toLocaleString("es-AR")
+      : "—";
+  }
+
+  const courseSet = new Set(rows.map(r => r.curso).filter(Boolean));
+  if (courseCount) courseCount.textContent = courseSet.size;
+
+  if (summary) renderSummaryText(rows, summary);
+
+  if (charts) {
+    charts.innerHTML = "";
+    REPORT_FIELDS.forEach(field => {
+      const counts = countField(rows, field.key);
+      createChartCard(field.label, counts, charts);
+    });
+  }
+}
+
+function renderByCourse(rows) {
+  const container = document.getElementById("by-course");
   if (!container) return;
 
   container.innerHTML = "";
-  SURVEY.forEach((section, sIdx) => {
-    const card = document.createElement("div");
-    card.className = "section-card";
 
-    const h2 = document.createElement("h2");
-    h2.className = "section-title";
-    h2.textContent = section.title;
-    card.appendChild(h2);
+  const grouped = getRowsByCourse(rows);
+  const order = ["1°", "2°", "3°", "4°", "5°", "6°"];
 
-    section.questions.forEach((question, qIdx) => {
-      card.appendChild(buildQuestion(sIdx, qIdx, question));
+  [...grouped.entries()]
+    .sort((a, b) => (order.indexOf(a[0]) === -1 ? 99 : order.indexOf(a[0])) - (order.indexOf(b[0]) === -1 ? 99 : order.indexOf(b[0])))
+    .forEach(([course, courseRows]) => {
+      const section = document.createElement("div");
+      section.className = "section-card";
+
+      const title = document.createElement("h2");
+      title.className = "section-title";
+      title.textContent = `Resultados por curso: ${course}`;
+      section.appendChild(title);
+
+      const text = document.createElement("div");
+      text.className = "report-text";
+      text.textContent = REPORT_FIELDS.map(field => {
+        const counts = countField(courseRows, field.key);
+        const value = Object.entries(counts)
+          .map(([opt, n]) => `${opt} = ${n}`)
+          .join(", ");
+        return `${field.label}: ${value || "sin respuestas"}`;
+      }).join("\n\n");
+      section.appendChild(text);
+
+      const grid = document.createElement("div");
+      grid.className = "chart-grid";
+
+      REPORT_FIELDS.forEach(field => {
+        const counts = countField(courseRows, field.key);
+        createChartCard(field.label, counts, grid);
+      });
+
+      section.appendChild(grid);
+      container.appendChild(section);
     });
-
-    container.appendChild(card);
-  });
 }
 
-function collectAnswers(form) {
-  const data = {};
-  form.querySelectorAll("input, select, textarea").forEach(el => {
-    if (!el.name) return;
+async function loadResponsesAndRender() {
+  const q = query(collection(db, COLLECTION_NAME), orderBy("submitted_at", "asc"));
+  const snap = await getDocs(q);
+  const rows = snap.docs.map(doc => doc.data());
 
-    if (el.type === "radio") {
-      if (el.checked) data[el.name] = el.value;
-      return;
-    }
+  destroyCharts();
+  renderGlobalResults(rows);
+  renderByCourse(rows);
 
-    if (el.type === "checkbox") {
-      if (!data[el.name]) data[el.name] = [];
-      if (el.checked) data[el.name].push(el.value);
-      return;
-    }
+  const exportBtn = document.getElementById("export-csv");
+  if (exportBtn) {
+    exportBtn.onclick = () => {
+      const lines = [FIELD_ORDER.map(csvEscape).join(",")];
+      rows.forEach(row => {
+        lines.push(FIELD_ORDER.map(key => csvEscape(asText(row[key]))).join(","));
+      });
 
-    data[el.name] = el.value;
-  });
-  return data;
+      const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "respuestas_esi.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+  }
 }
 
-function updateConditionalFields(form) {
-  const answers = collectAnswers(form);
+document.getElementById("refresh-results")?.addEventListener("click", async () => {
+  await loadResponsesAndRender();
+});
 
-  form.querySelectorAll("[data-visible-field]").forEach(block => {
-    const field = block.dataset.visibleField;
-    const current = answers[field] ?? "";
-
-    let show = true;
-    if (block.dataset.visibleValue) show = current === block.dataset.visibleValue;
-    if (block.dataset.visibleNot) show = current !== "" && current !== block.dataset.visibleNot;
-
-    block.classList.toggle("hidden", !show);
-
-    block.querySelectorAll("input, select, textarea").forEach(el => {
-      if (!el.name) return;
-
-      const required = show && block.dataset.requiredWhenVisible === "true";
-      if (el.type === "radio" || el.tagName === "SELECT") {
-        el.required = required;
-      }
-
-      if (!show) {
-        if (el.type === "radio" || el.type === "checkbox") el.checked = false;
-        if (el.tagName === "SELECT") el.value = "";
-      }
-    });
-  });
-}
-
-async function saveResponse(form) {
-  const fd = new FormData(form);
-
-  const record = {
-    id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `resp_${Date.now()}`,
-    curso: fd.get("curso") || "",
-    started_at: fd.get("started_at") || new Date().toISOString(),
-    submitted_at: new Date().toISOString(),
-
-    novi: fd.get("novi") || "",
-    vida_sexual: fd.get("vida_sexual") || "",
-    preservativo: fd.get("preservativo") || "",
-    otros_anticonceptivos: fd.get("otros_anticonceptivos") || "",
-    info_futuro: fd.get("info_futuro") || "",
-
-    preservativo_conoce: fd.get("preservativo_conoce") || "",
-    otros_metodos: fd.get("otros_metodos") || "",
-    escuela_anti: fd.get("escuela_anti") || "",
-
-    bullying: fd.get("bullying") || "",
-    motivo_bullying: fd.get("motivo_bullying") || "",
-
-    orientacion: fd.get("orientacion") || "",
-    abierto_sexualidad: fd.get("abierto_sexualidad") || "",
-    discriminado_sexualidad: fd.get("discriminado_sexualidad") || "",
-
-    identidad_genero: fd.get("identidad_genero") || "",
-    abierto_identidad: fd.get("abierto_identidad") || "",
-    discriminado_identidad: fd.get("discriminado_identidad") || "",
-
-    alcohol_vez: fd.get("alcohol_vez") || "",
-    alcohol_frecuencia: fd.get("alcohol_frecuencia") || "",
-
-    sustancias_vez: fd.get("sustancias_vez") || "",
-    sustancias_frecuencia: fd.get("sustancias_frecuencia") || "",
-
-    imagen_corporal: fd.get("imagen_corporal") || "",
-    redes_influyen: fd.get("redes_influyen") || "",
-    comparacion: fd.get("comparacion") || "",
-    hablo_mal: fd.get("hablo_mal") || "",
-    escucho_mal: fd.get("escucho_mal") || "",
-
-    esi_suficiente: fd.get("esi_suficiente") || "",
-    temas_esi: fd.getAll("temas_esi").join(" | ")
-  };
-
-  await addDoc(collection(db, COLLECTION_NAME), record);
-  return record;
-}
-
-async function initSurvey() {
-  const form = document.getElementById("survey-form");
-  if (!form) return;
-
-  const startedAtInput = document.getElementById("started_at");
-  if (startedAtInput) startedAtInput.value = new Date().toISOString();
-
-  buildSurveyMarkup();
-  updateConditionalFields(form);
-
-  form.addEventListener("change", () => updateConditionalFields(form));
-  form.addEventListener("input", () => updateConditionalFields(form));
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    if (!form.checkValidity()) {
-      form.reportValidity();
-      return;
-    }
-
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn ? submitBtn.textContent : "";
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Guardando...";
-    }
-
-    try {
-      await saveResponse(form);
-
-      const msg = document.getElementById("saved-message");
-      if (msg) msg.classList.remove("hidden");
-
-      form.reset();
-      if (startedAtInput) startedAtInput.value = new Date().toISOString();
-      updateConditionalFields(form);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch (error) {
-      console.error("Error al guardar:", error);
-      alert("No se pudo guardar la respuesta.");
-    } finally {
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = originalText || "Guardar respuestas";
-      }
-    }
-  });
-}
-
-document.addEventListener("DOMContentLoaded", initSurvey);
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    await loadResponsesAndRender();
+  } catch (error) {
+    console.error(error);
+    alert("No se pudieron cargar las respuestas. Revisá Firestore y las reglas.");
+  }
+});
