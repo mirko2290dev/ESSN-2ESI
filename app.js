@@ -1,24 +1,4 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getFirestore,
-  collection,
-  getDocs,
-  query,
-  orderBy
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyB9V6o6_j2Fr28Km0ejK46fDg7EMS8B8JA",
-  authDomain: "essn-61020.firebaseapp.com",
-  projectId: "essn-61020",
-  storageBucket: "essn-61020.firebasestorage.app",
-  messagingSenderId: "309432873519",
-  appId: "1:309432873519:web:f9d7b0e8360c24b6338cda"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const COLLECTION_NAME = "respuestas";
+const JSON_FILE = "respuestas.json";
 
 const REPORT_FIELDS = [
   { key: "novi", label: "¿Tenés o tuviste novi@?" },
@@ -63,21 +43,38 @@ function csvEscape(value) {
 
 function countField(rows, key) {
   const counts = {};
+
   rows.forEach(row => {
     const value = row[key];
+
     if (!value) return;
-    counts[value] = (counts[value] || 0) + 1;
+
+    if (Array.isArray(value)) {
+      value.forEach(v => {
+        if (!v) return;
+        counts[v] = (counts[v] || 0) + 1;
+      });
+    } else {
+      counts[value] = (counts[value] || 0) + 1;
+    }
   });
+
   return counts;
 }
 
 function getRowsByCourse(rows) {
   const map = new Map();
+
   rows.forEach(row => {
     const course = row.curso || "Sin curso";
-    if (!map.has(course)) map.set(course, []);
+
+    if (!map.has(course)) {
+      map.set(course, []);
+    }
+
     map.get(course).push(row);
   });
+
   return map;
 }
 
@@ -101,7 +98,10 @@ function createChartCard(titleText, counts, parent) {
     .sort((a, b) => b[1] - a[1])
     .map(([opt, n]) => `${opt}: ${n}`);
 
-  text.textContent = lines.length ? lines.join("\n") : "Sin datos todavía.";
+  text.textContent = lines.length
+    ? lines.join("\n")
+    : "Sin datos todavía.";
+
   card.appendChild(text);
 
   const canvas = document.createElement("canvas");
@@ -125,20 +125,26 @@ function createChartCard(titleText, counts, parent) {
       options: {
         responsive: true,
         plugins: {
-          legend: { display: false }
+          legend: {
+            display: false
+          }
         }
       }
     });
+
     chartInstances.push(chart);
   }
 }
 
 function renderSummaryText(rows, target) {
   const parts = REPORT_FIELDS.map(field => {
+
     const counts = countField(rows, field.key);
+
     const text = Object.entries(counts)
       .map(([opt, n]) => `${opt} = ${n}`)
       .join(", ");
+
     return `${field.label}: ${text || "sin respuestas"}`;
   });
 
@@ -149,114 +155,178 @@ function renderSummaryText(rows, target) {
 }
 
 function renderGlobalResults(rows) {
+
   const total = document.getElementById("total-count");
-  const lastDate = document.getElementById("last-date");
   const courseCount = document.getElementById("course-count");
   const summary = document.getElementById("summary-global");
   const charts = document.getElementById("charts-global");
 
-  if (total) total.textContent = rows.length;
-  if (lastDate) {
-    lastDate.textContent = rows.length
-      ? new Date(rows[rows.length - 1].submitted_at).toLocaleString("es-AR")
-      : "—";
+  if (total) {
+    total.textContent = rows.length;
   }
 
-  const courseSet = new Set(rows.map(r => r.curso).filter(Boolean));
-  if (courseCount) courseCount.textContent = courseSet.size;
+  const courseSet = new Set(
+    rows.map(r => r.curso).filter(Boolean)
+  );
 
-  if (summary) renderSummaryText(rows, summary);
+  if (courseCount) {
+    courseCount.textContent = courseSet.size;
+  }
+
+  if (summary) {
+    renderSummaryText(rows, summary);
+  }
 
   if (charts) {
+
     charts.innerHTML = "";
+
     REPORT_FIELDS.forEach(field => {
+
       const counts = countField(rows, field.key);
-      createChartCard(field.label, counts, charts);
+
+      createChartCard(
+        field.label,
+        counts,
+        charts
+      );
     });
   }
 }
 
 function renderByCourse(rows) {
+
   const container = document.getElementById("by-course");
+
   if (!container) return;
 
   container.innerHTML = "";
 
   const grouped = getRowsByCourse(rows);
-  const order = ["1°", "2°", "3°", "4°", "5°", "6°"];
 
-  [...grouped.entries()]
-    .sort((a, b) => (order.indexOf(a[0]) === -1 ? 99 : order.indexOf(a[0])) - (order.indexOf(b[0]) === -1 ? 99 : order.indexOf(b[0])))
-    .forEach(([course, courseRows]) => {
-      const section = document.createElement("div");
-      section.className = "section-card";
+  [...grouped.entries()].forEach(([course, courseRows]) => {
 
-      const title = document.createElement("h2");
-      title.className = "section-title";
-      title.textContent = `Resultados por curso: ${course}`;
-      section.appendChild(title);
+    const section = document.createElement("div");
+    section.className = "section-card";
 
-      const text = document.createElement("div");
-      text.className = "report-text";
-      text.textContent = REPORT_FIELDS.map(field => {
-        const counts = countField(courseRows, field.key);
-        const value = Object.entries(counts)
-          .map(([opt, n]) => `${opt} = ${n}`)
-          .join(", ");
-        return `${field.label}: ${value || "sin respuestas"}`;
-      }).join("\n\n");
-      section.appendChild(text);
+    const title = document.createElement("h2");
+    title.className = "section-title";
+    title.textContent = `Resultados por curso: ${course}`;
 
-      const grid = document.createElement("div");
-      grid.className = "chart-grid";
+    section.appendChild(title);
 
-      REPORT_FIELDS.forEach(field => {
-        const counts = countField(courseRows, field.key);
-        createChartCard(field.label, counts, grid);
-      });
+    const text = document.createElement("div");
+    text.className = "report-text";
 
-      section.appendChild(grid);
-      container.appendChild(section);
+    text.textContent = REPORT_FIELDS.map(field => {
+
+      const counts = countField(courseRows, field.key);
+
+      const value = Object.entries(counts)
+        .map(([opt, n]) => `${opt} = ${n}`)
+        .join(", ");
+
+      return `${field.label}: ${value || "sin respuestas"}`;
+
+    }).join("\n\n");
+
+    section.appendChild(text);
+
+    const grid = document.createElement("div");
+    grid.className = "chart-grid";
+
+    REPORT_FIELDS.forEach(field => {
+
+      const counts = countField(courseRows, field.key);
+
+      createChartCard(
+        field.label,
+        counts,
+        grid
+      );
     });
+
+    section.appendChild(grid);
+
+    container.appendChild(section);
+  });
 }
 
 async function loadResponsesAndRender() {
-  const q = query(collection(db, COLLECTION_NAME), orderBy("submitted_at", "asc"));
-  const snap = await getDocs(q);
-  const rows = snap.docs.map(doc => doc.data());
+
+  const response = await fetch(JSON_FILE);
+
+  if (!response.ok) {
+    throw new Error("No se pudo cargar respuestas.json");
+  }
+
+  const raw = await response.json();
+
+  // Compatible con export de Firestore
+  const rows = raw.map(item => item.data || item);
 
   destroyCharts();
+
   renderGlobalResults(rows);
+
   renderByCourse(rows);
 
   const exportBtn = document.getElementById("export-csv");
+
   if (exportBtn) {
+
     exportBtn.onclick = () => {
-      const lines = [FIELD_ORDER.map(csvEscape).join(",")];
+
+      const lines = [
+        FIELD_ORDER.map(csvEscape).join(",")
+      ];
+
       rows.forEach(row => {
-        lines.push(FIELD_ORDER.map(key => csvEscape(asText(row[key]))).join(","));
+
+        lines.push(
+          FIELD_ORDER
+            .map(key => csvEscape(asText(row[key])))
+            .join(",")
+        );
       });
 
-      const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+      const blob = new Blob(
+        [lines.join("\n")],
+        { type: "text/csv;charset=utf-8;" }
+      );
+
       const url = URL.createObjectURL(blob);
+
       const a = document.createElement("a");
+
       a.href = url;
       a.download = "respuestas_esi.csv";
+
       a.click();
+
       URL.revokeObjectURL(url);
     };
   }
 }
 
-document.getElementById("refresh-results")?.addEventListener("click", async () => {
+document.getElementById("refresh-results")
+?.addEventListener("click", async () => {
+
   await loadResponsesAndRender();
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
+
   try {
+
     await loadResponsesAndRender();
+
   } catch (error) {
+
     console.error(error);
-    alert("No se pudieron cargar las respuestas. Revisá Firestore y las reglas.");
+
+    alert(
+      "No se pudieron cargar las respuestas.json"
+    );
   }
 });
